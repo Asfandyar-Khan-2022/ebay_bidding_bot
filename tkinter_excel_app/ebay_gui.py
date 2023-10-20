@@ -2,8 +2,13 @@ import tkinter as tk
 from tkinter import ttk
 import openpyxl
 from bidder_class import EbayBidding
-import sched
+from apscheduler.schedulers.background import BackgroundScheduler
 import time 
+from datetime import datetime as dt
+import datetime
+
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 def load_data():
     path = "bid.xlsx"
@@ -17,44 +22,41 @@ def load_data():
     for value_tuple in list_values[1:]:
         treeview.insert("", tk.END, values=value_tuple)
 
-def print_excel():
-    path = "bid.xlsx"
-    workbook = openpyxl.load_workbook(path)
-    sheet = workbook.active
+def bid_time():
+    item = item_id.get()
 
-    list_values = list(sheet.values)
-    for i in list_values[1:]:
-        if i[-1] == None:
-            ebay_bidding = EbayBidding(
-                chrome_user="Default",
-                chrome_user_path="C:\\Users\\a_asf\\AppData\\Local\\Google\\Chrome\\User Data\\",
-                chrome_exe="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                ebay_item_number=f"{i[0]}")
-            bid_end = ebay_bidding.get_minute_delayed_bid_time()
-            ebay_bidding.quit()
-        return bid_end
-    return None
+    ebay_bidding = EbayBidding(
+        chrome_user="Default",
+        chrome_user_path="C:\\Users\\a_asf\\AppData\\Local\\Google\\Chrome\\User Data\\",
+        chrome_exe="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        ebay_item_number=f"{item}")
+    bid_end = ebay_bidding.get_minute_delayed_bid_time()
+    ebay_bidding.quit()
+    return bid_end
+
 
 def place_bid():
     print("BID!!")
 
-def schedule(bid_end):
+def schedule_on_start():
     path = "bid.xlsx"
     workbook = openpyxl.load_workbook(path)
     sheet = workbook.active
     list_values = list(sheet.values)
+    scheduler.remove_all_jobs()
     
-    for count, item in enumerate(list_values[1:], 1):
-        scheduler = sched.scheduler(time.time, time.sleep)
-        scheduler.enterabs(bid_end.timestamp(), count, place_bid)
-    
-    scheduler.run()
+    for item in list_values[1:]:
+        scheduler.add_job(place_bid, "date", run_date=item[-1])
+    if len(list_values[1:]) > 0:
+        scheduler.print_jobs()
+
+
 
 def insert_row():
     item = item_id.get()
     bid_amount = amount.get()
     seconds = seconds_combobox.get()
-    bid_end = print_excel()
+    bid_end = bid_time()
 
     # Insert row into Excel sheet
     path = "bid.xlsx"
@@ -66,7 +68,7 @@ def insert_row():
 
     # Insert row into treeview
     treeview.insert("", tk.END, values=row_values)
-
+    schedule_on_start()
 
 root = tk.Tk()
 
@@ -115,7 +117,7 @@ treeview = ttk.Treeview(treeFrame, show="headings", yscrollcommand=treeScroll.se
 treeview.column("Item ID", width=100)
 treeview.column("Amount £", width=50)
 treeview.column("Seconds", width=100, anchor="center")
-treeview.column("Bid end", width=100)
+treeview.column("Bid end", width=200)
 treeview.pack()
 treeScroll.config(command=treeview.yview)
 load_data()
@@ -127,7 +129,7 @@ delete_button.grid(row=5, column=0, padx=5, pady=10, sticky="nsew")
 def delete():
     selected_item=treeview.selection()[0]
     selected = treeview.index(treeview.selection())
-    print(treeview.index(treeview.selection()))
+    delete_item_id = treeview.item(treeview.selection(), "values")[0]
 
     try:
         path = "bid.xlsx"
@@ -136,16 +138,8 @@ def delete():
         sheet.delete_rows(selected + 2, 1)
         workbook.save(path)
     except:
-        print(selected_item)
-
+        pass
     treeview.delete(selected_item)
+    schedule_on_start()
 
 root.mainloop()
-
-# ebay_bidding = EbayBidding(
-#     chrome_user="Default",
-#     chrome_user_path="C:\\Users\\a_asf\\AppData\\Local\\Google\\Chrome\\User Data\\",
-#     chrome_exe="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-#     ebay_item_number="186118426817")
-# ebay_bidding.get_minute_delayed_bid_time()
-# ebay_bidding.quit()
