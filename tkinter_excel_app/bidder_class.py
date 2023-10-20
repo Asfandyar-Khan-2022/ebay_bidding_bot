@@ -15,7 +15,7 @@ class EbayBidding:
         self.chrome_exe = chrome_exe
         self.ebay_item_number = ebay_item_number
         self.options = Options()
-        self.options.add_argument("--headless=new")
+        # self.options.add_argument("--headless=new")
     
     def set_chrome_user_and_path(self):
         self.options.add_argument(f"--profile-directory={self.chrome_user}")
@@ -28,8 +28,8 @@ class EbayBidding:
 
     def bid_end_time_left(self):
         self.bid_end_time_left = self.driver.find_element(
-            By.XPATH,
-            '//*[@id="mainContent"]/div[1]/div[3]/span[2]/span/span[1]')
+            By.CLASS_NAME,
+            'ux-timer__text')
         self.current_time = self.bid_end_time_left.text
     
     def new_time(self):
@@ -40,8 +40,8 @@ class EbayBidding:
     
     def bid_end_time(self):
         bid_end_time = self.driver.find_element(
-            By.XPATH, 
-            '//*[@id="mainContent"]/div[1]/div[3]/span[2]/span/span[3]')
+            By.CLASS_NAME, 
+            'ux-timer__time-left')
         self.end_time = bid_end_time.text.split()
     
     def bid_time_when_seconds_visible(self):
@@ -113,18 +113,18 @@ class EbayBidding:
         return self.minute_before_bid()
     
     def place_bid(self, seconds, amount):
-        submid_bid = self.driver.find_element(By.XPATH, '//*[@id="bidBtn_btn"]')
+        submid_bid = self.driver.find_element(By.CLASS_NAME, 'ux-call-to-action__text')
         submid_bid.click()
         self.driver.implicitly_wait(3)
-        insert_amount = self.driver.find_element(By.XPATH, '//*[@id="s0-0-1-1-3-placebid-section-offer-section-price-10-textbox"]')
+        insert_amount = self.driver.find_element(By.ID, 's0-0-1-1-3-placebid-section-offer-section-price-10-textbox')
         insert_amount.send_keys(amount)
-        review_bid = self.driver.find_element(By.XPATH, '//*[@id="mainContent"]/div[2]/div[1]/div[2]/div/div[2]/div[3]/section[1]/div/marko-destroy-when-detached/div/div/div[1]/div[3]/div/div/span/div/div/div/button')
+        review_bid = self.driver.find_element(By.CSS_SELECTOR, 'button[class="btn btn--fluid btn--large btn--primary"]')
         review_bid.click()
         self.driver.implicitly_wait(3)
         return(self.seconds_before_bid(seconds=seconds))
     
     def confirm_bid(self):
-        confirm_bid = self.driver.find_element(By.XPATH, '//*[@id="confirmBid"]')
+        confirm_bid = self.driver.find_element(By.ID, 'confirmBid')
         confirm_bid.click()
 
     def quit(self):
