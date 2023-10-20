@@ -1,12 +1,9 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.chrome.options import Options
-import time
 from selenium.webdriver.common.by import By
-import sched
 from datetime import datetime as dt
 import datetime
 
-options = Options()
 class EbayBidding:
     def __init__(
             self, chrome_user, 
@@ -19,13 +16,14 @@ class EbayBidding:
         self.chrome_exe = chrome_exe
         self.ebay_item_number = ebay_item_number
         self.seconds_before_bid = seconds_before_bid
+        self.options = Options()
     
     def set_chrome_user_and_path(self):
-        options.add_argument(f"--profile-directory={self.chrome_user}")
-        options.add_argument(f"--user-data-dir={self.chrome_user_path}")
+        self.options.add_argument(f"--profile-directory={self.chrome_user}")
+        self.options.add_argument(f"--user-data-dir={self.chrome_user_path}")
     
     def open_link_to_item(self):
-        self.driver = uc.Chrome(executable_path=self.chrome_exe, options=options)
+        self.driver = uc.Chrome(executable_path=self.chrome_exe, options=self.options)
         self.driver.get(f"https://www.ebay.co.uk/itm/{self.ebay_item_number}")
         self.driver.implicitly_wait(3)
 
