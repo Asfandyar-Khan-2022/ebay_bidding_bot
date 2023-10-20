@@ -9,14 +9,13 @@ class EbayBidding:
             self, chrome_user, 
             chrome_user_path,
             chrome_exe, 
-            ebay_item_number, 
-            seconds_before_bid = 5):
+            ebay_item_number):
         self.chrome_user = chrome_user
         self.chrome_user_path = chrome_user_path
         self.chrome_exe = chrome_exe
         self.ebay_item_number = ebay_item_number
-        self.seconds_before_bid = seconds_before_bid
         self.options = Options()
+        self.options.add_argument("--headless=new")
     
     def set_chrome_user_and_path(self):
         self.options.add_argument(f"--profile-directory={self.chrome_user}")
@@ -99,6 +98,9 @@ class EbayBidding:
     def minute_before_bid(self):
         return (self.date_now - datetime.timedelta(minutes=1))
     
+    def seconds_before_bid(self, seconds):
+        return (self.date_now - datetime.timedelta(seconds=seconds))
+    
     def get_minute_delayed_bid_time(self):
         self.set_chrome_user_and_path()
         self.open_link_to_item()
@@ -109,6 +111,21 @@ class EbayBidding:
         self.bid_hours_and_minutes_more_than_week()
         self.bid_hours_and_minutes_within_week()
         return self.minute_before_bid()
+    
+    def place_bid(self, seconds, amount):
+        submid_bid = self.driver.find_element(By.XPATH, '//*[@id="bidBtn_btn"]')
+        submid_bid.click()
+        self.driver.implicitly_wait(3)
+        insert_amount = self.driver.find_element(By.XPATH, '//*[@id="s0-0-1-1-3-placebid-section-offer-section-price-10-textbox"]')
+        insert_amount.send_keys(amount)
+        review_bid = self.driver.find_element(By.XPATH, '//*[@id="mainContent"]/div[2]/div[1]/div[2]/div/div[2]/div[3]/section[1]/div/marko-destroy-when-detached/div/div/div[1]/div[3]/div/div/span/div/div/div/button')
+        review_bid.click()
+        self.driver.implicitly_wait(3)
+        return(self.seconds_before_bid(seconds=seconds))
+    
+    def confirm_bid(self):
+        confirm_bid = self.driver.find_element(By.XPATH, '//*[@id="confirmBid"]')
+        confirm_bid.click()
 
     def quit(self):
         self.driver.quit()

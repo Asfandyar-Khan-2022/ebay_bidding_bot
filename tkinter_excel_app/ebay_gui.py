@@ -34,9 +34,22 @@ def bid_time():
     ebay_bidding.quit()
     return bid_end
 
+def test():
+    print("test")
 
-def place_bid():
-    print("BID!!")
+def bid(item):
+    ebay_bidding = EbayBidding(
+        chrome_user="Default",
+        chrome_user_path="C:\\Users\\a_asf\\AppData\\Local\\Google\\Chrome\\User Data\\",
+        chrome_exe="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        ebay_item_number=f"{item}")
+    
+    ebay_bidding.get_minute_delayed_bid_time()
+    seconds_before_bid = ebay_bidding.place_bid(seconds=5, amount=100)
+    print(seconds_before_bid)
+    print(type(seconds_before_bid))
+    scheduler.add_job(test, "date", run_date=seconds_before_bid)
+
 
 def schedule_on_start():
     path = "bid.xlsx"
@@ -46,7 +59,7 @@ def schedule_on_start():
     scheduler.remove_all_jobs()
     
     for item in list_values[1:]:
-        scheduler.add_job(place_bid, "date", run_date=item[-1])
+        scheduler.add_job(bid, "date", run_date=item[-1], args=[item[0]])
     if len(list_values[1:]) > 0:
         scheduler.print_jobs()
 
