@@ -77,16 +77,22 @@ class EbayBidding:
                     minute=set_minutes,
                     second=0,
                     microsecond=0)
+    
+    def calculate_days_before_bid(self, day_number):
+        set_hour = int(self.end_time[1].split(":")[0])
+        set_minutes = int(self.end_time[1].split(":")[1])
+        date_now = (dt.now() + datetime.timedelta(day_number))
+        self.date_now = date_now.replace(hour=set_hour, minute=set_minutes, second=0, microsecond=0)
 
     def bid_hours_and_minutes_within_week(self):
             if "/" not in self.end_time[0] and self.end_time[0] != "Today":
                 i = 0
+                if self.end_time[0].strip(", ") == (dt.now()).strftime("%A").strip(" "):
+                    self.calculate_days_before_bid(7)
+
                 while self.end_time[0].strip(", ") != (dt.now() + datetime.timedelta(i)).strftime("%A").strip(" "):
                     i += 1
-                    set_hour = int(self.end_time[1].split(":")[0])
-                    set_minutes = int(self.end_time[1].split(":")[1])
-                    date_now = (dt.now() + datetime.timedelta(i))
-                    self.date_now = date_now.replace(hour=set_hour, minute=set_minutes, second=0, microsecond=0)
+                    self.calculate_days_before_bid(i)
 
     def convert_timedelta(duration):
         days, seconds = duration.days, duration.seconds

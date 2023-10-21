@@ -3,9 +3,6 @@ from tkinter import ttk
 import openpyxl
 from bidder_class import EbayBidding
 from apscheduler.schedulers.background import BackgroundScheduler
-import time 
-from datetime import datetime as dt
-import datetime
 
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -34,21 +31,19 @@ def bid_time():
     ebay_bidding.quit()
     return bid_end
 
-def test():
-    print("test")
-
-def bid(item):
+def bid(item, amount, seconds):
     ebay_bidding = EbayBidding(
         chrome_user="Default",
         chrome_user_path="C:\\Users\\a_asf\\AppData\\Local\\Google\\Chrome\\User Data\\",
         chrome_exe="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
         ebay_item_number=f"{item}")
     
+    seconds = int(seconds)
     ebay_bidding.get_minute_delayed_bid_time()
-    seconds_before_bid = ebay_bidding.place_bid(seconds=5, amount=100)
+    seconds_before_bid = ebay_bidding.place_bid(seconds=seconds, amount=amount)
     print(seconds_before_bid)
     print(type(seconds_before_bid))
-    scheduler.add_job(test, "date", run_date=seconds_before_bid)
+    scheduler.add_job(ebay_bidding.confirm_bid, "date", run_date=seconds_before_bid)
 
 
 def schedule_on_start():
@@ -59,7 +54,7 @@ def schedule_on_start():
     scheduler.remove_all_jobs()
     
     for item in list_values[1:]:
-        scheduler.add_job(bid, "date", run_date=item[-1], args=[item[0]])
+        scheduler.add_job(bid, "date", run_date=item[-1], args=[item[0], item[1], item[2]])
     if len(list_values[1:]) > 0:
         scheduler.print_jobs()
 
