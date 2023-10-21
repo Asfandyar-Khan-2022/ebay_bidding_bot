@@ -46,7 +46,37 @@ class EbayGui():
     def submit_bid(self):
         button = ttk.Button(self.widgets_frame, text="Bid", command=self.insert_row)
         button.grid(row=4, column=0, padx=5, pady=10, sticky="nsew")
+
+    def error_log(self):
+        self.errors_frame = ttk.LabelFrame(self.frame, text="Errors Log", width=100, height=100)
+        self.errors_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
+
+    def error_text(self):
+        self.error = tk.Label(self.errors_frame, text="")
+        self.error.pack(pady=20)
     
+    def type_error(self):
+        try:
+            int(self.item_id.get())
+        except:
+            self.error.config(text="Please enter a valid item ID. It should look something like this: 101202921365")
+        try:
+            float(self.amount.get())
+        except:
+            self.error.config(text="Please enter a valid amount. It should look somethig like this: 10 or 10.5")
+        try:
+            int(self.seconds_combobox.get())
+        except:
+            self.error.config(text="Please enter a valid time. It should look something like this: 3")
+        try:
+            int(self.item_id.get())
+            float(self.amount.get())
+            int(self.seconds_combobox.get())
+            self.error.config(text=" ")
+            self.insert_row()
+        except:
+            pass
+
     def bid_history(self):
         self.treeFrame = ttk.Frame(self.frame)
         self.treeFrame.grid(row=0, column=1)
@@ -129,10 +159,18 @@ class EbayGui():
         
         seconds = int(seconds)
         ebay_bidding.get_minute_delayed_bid_time()
-        seconds_before_bid = ebay_bidding.place_bid(seconds=seconds, amount=amount)
-        self.scheduler.add_job(ebay_bidding.confirm_bid, "date", run_date=seconds_before_bid)
-        self.scheduler.add_job(self.remove_old_bid, "date", run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
+        ebay_bidding.click_submit_bid()
+        ebay_bidding.insert_bid_amount(amount=amount)
 
+        seconds_before_bid = ebay_bidding.review_inserted_amount(seconds=seconds)
+        
+        if seconds_before_bid == False:
+            self.error.config(text="You have been outbid")
+            ebay_bidding.quit()
+        else:
+            self.scheduler.add_job(ebay_bidding.confirm_bid, "date", run_date=seconds_before_bid)
+            self.scheduler.add_job(self.remove_old_bid, "date", run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
+            
     def schedule_on_start(self):
         path = "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\bid.xlsx"
         workbook = openpyxl.load_workbook(path)
@@ -174,6 +212,8 @@ class EbayGui():
         self.bid_history()
         self.load_history()
         self.delete_row()
+        self.error_log()
+        self.error_text()
         self.schedule_on_start()
         self.start_gui()
 
