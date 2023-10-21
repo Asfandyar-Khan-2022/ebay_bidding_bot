@@ -9,14 +9,13 @@ class EbayBidding:
             self, chrome_user, 
             chrome_user_path,
             chrome_exe, 
-            ebay_item_number, 
-            seconds_before_bid = 5):
+            ebay_item_number):
         self.chrome_user = chrome_user
         self.chrome_user_path = chrome_user_path
         self.chrome_exe = chrome_exe
         self.ebay_item_number = ebay_item_number
-        self.seconds_before_bid = seconds_before_bid
         self.options = Options()
+        # self.options.add_argument("--headless=new")
     
     def set_chrome_user_and_path(self):
         self.options.add_argument(f"--profile-directory={self.chrome_user}")
@@ -29,8 +28,8 @@ class EbayBidding:
 
     def bid_end_time_left(self):
         self.bid_end_time_left = self.driver.find_element(
-            By.XPATH,
-            '//*[@id="mainContent"]/div[1]/div[3]/span[2]/span/span[1]')
+            By.CLASS_NAME,
+            'ux-timer__text')
         self.current_time = self.bid_end_time_left.text
     
     def new_time(self):
@@ -41,8 +40,8 @@ class EbayBidding:
     
     def bid_end_time(self):
         bid_end_time = self.driver.find_element(
-            By.XPATH, 
-            '//*[@id="mainContent"]/div[1]/div[3]/span[2]/span/span[3]')
+            By.CLASS_NAME, 
+            'ux-timer__time-left')
         self.end_time = bid_end_time.text.split()
     
     def bid_time_when_seconds_visible(self):
@@ -78,16 +77,22 @@ class EbayBidding:
                     minute=set_minutes,
                     second=0,
                     microsecond=0)
+    
+    def calculate_days_before_bid(self, day_number):
+        set_hour = int(self.end_time[1].split(":")[0])
+        set_minutes = int(self.end_time[1].split(":")[1])
+        date_now = (dt.now() + datetime.timedelta(day_number))
+        self.date_now = date_now.replace(hour=set_hour, minute=set_minutes, second=0, microsecond=0)
 
     def bid_hours_and_minutes_within_week(self):
             if "/" not in self.end_time[0] and self.end_time[0] != "Today":
                 i = 0
+                if self.end_time[0].strip(", ") == (dt.now()).strftime("%A").strip(" "):
+                    self.calculate_days_before_bid(7)
+
                 while self.end_time[0].strip(", ") != (dt.now() + datetime.timedelta(i)).strftime("%A").strip(" "):
                     i += 1
-                    set_hour = int(self.end_time[1].split(":")[0])
-                    set_minutes = int(self.end_time[1].split(":")[1])
-                    date_now = (dt.now() + datetime.timedelta(i))
-                    self.date_now = date_now.replace(hour=set_hour, minute=set_minutes, second=0, microsecond=0)
+                    self.calculate_days_before_bid(i)
 
     def convert_timedelta(duration):
         days, seconds = duration.days, duration.seconds
@@ -99,6 +104,9 @@ class EbayBidding:
     def minute_before_bid(self):
         return (self.date_now - datetime.timedelta(minutes=1))
     
+    def seconds_before_bid(self, seconds):
+        return (self.date_now - datetime.timedelta(seconds=seconds))
+    
     def get_minute_delayed_bid_time(self):
         self.set_chrome_user_and_path()
         self.open_link_to_item()
@@ -109,6 +117,21 @@ class EbayBidding:
         self.bid_hours_and_minutes_more_than_week()
         self.bid_hours_and_minutes_within_week()
         return self.minute_before_bid()
+    
+    def place_bid(self, seconds, amount):
+        submid_bid = self.driver.find_element(By.CLASS_NAME, 'ux-call-to-action__text')
+        submid_bid.click()
+        self.driver.implicitly_wait(3)
+        insert_amount = self.driver.find_element(By.ID, 's0-0-1-1-3-placebid-section-offer-section-price-10-textbox')
+        insert_amount.send_keys(amount)
+        review_bid = self.driver.find_element(By.CSS_SELECTOR, 'button[class="btn btn--fluid btn--large btn--primary"]')
+        review_bid.click()
+        self.driver.implicitly_wait(3)
+        return(self.seconds_before_bid(seconds=seconds))
+    
+    def confirm_bid(self):
+        confirm_bid = self.driver.find_element(By.ID, 'confirmBid')
+        confirm_bid.click()
 
     def quit(self):
         self.driver.quit()
