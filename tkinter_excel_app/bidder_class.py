@@ -118,22 +118,30 @@ class EbayBidding:
         self.bid_hours_and_minutes_within_week()
         return self.minute_before_bid()
     
-    def place_bid(self, seconds, amount):
+    def click_submit_bid(self):
         submid_bid = self.driver.find_element(By.CLASS_NAME, 'ux-call-to-action__text')
         submid_bid.click()
+    
+    def insert_bid_amount(self, amount):
         self.driver.implicitly_wait(3)
         insert_amount = self.driver.find_element(By.ID, 's0-0-1-1-3-placebid-section-offer-section-price-10-textbox')
         insert_amount.send_keys(amount)
+    
+    def review_inserted_amount(self, seconds):
         review_bid = self.driver.find_element(By.CSS_SELECTOR, 'button[class="btn btn--fluid btn--large btn--primary"]')
-        review_bid.click()
-        self.driver.implicitly_wait(3)
-        return(self.seconds_before_bid(seconds=seconds))
+        if review_bid.is_enabled():
+            review_bid.click()
+            return(self.seconds_before_bid(seconds=seconds))
+        self.quit()
+        return False
     
     def confirm_bid(self):
+        self.driver.implicitly_wait(3)
         confirm_bid = self.driver.find_element(By.ID, 'confirmBid')
         confirm_bid.click()
 
     def quit(self):
+        self.driver.close()
         self.driver.quit()
 
 # if __name__ == "__main__":
