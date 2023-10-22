@@ -44,9 +44,9 @@ class EbayGui():
         self.seconds_combobox.grid(row=2, column=0, padx=5, pady=10, sticky="ew")
     
     def submit_bid(self):
-        button = ttk.Button(self.widgets_frame, text="Bid", command=self.insert_row)
+        button = ttk.Button(self.widgets_frame, text="Bid", command=self.type_error)
         button.grid(row=4, column=0, padx=5, pady=10, sticky="nsew")
-
+    
     def error_log(self):
         self.errors_frame = ttk.LabelFrame(self.frame, text="Errors Log", width=100, height=100)
         self.errors_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
@@ -76,7 +76,8 @@ class EbayGui():
             self.insert_row()
         except:
             pass
-
+        
+    
     def bid_history(self):
         self.treeFrame = ttk.Frame(self.frame)
         self.treeFrame.grid(row=0, column=1)
@@ -146,8 +147,11 @@ class EbayGui():
             chrome_user_path="C:\\Users\\a_asf\\AppData\\Local\\Google\\Chrome\\User Data\\",
             chrome_exe="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
             ebay_item_number=f"{item}")
+        print("before bid_end")
         bid_end = ebay_bidding.get_minute_delayed_bid_time()
+        print("before quit")
         ebay_bidding.quit()
+        print("before return")
         return bid_end
 
     def bid(self, item, amount, seconds):
@@ -170,7 +174,7 @@ class EbayGui():
         else:
             self.scheduler.add_job(ebay_bidding.confirm_bid, "date", run_date=seconds_before_bid)
             self.scheduler.add_job(self.remove_old_bid, "date", run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
-            
+
     def schedule_on_start(self):
         path = "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\bid.xlsx"
         workbook = openpyxl.load_workbook(path)
@@ -188,8 +192,8 @@ class EbayGui():
         bid_amount = self.amount.get()
         seconds = self.seconds_combobox.get()
         bid_end = self.bid_time()
-
         # Insert row into Excel sheet
+
         path = "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\bid.xlsx"
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
