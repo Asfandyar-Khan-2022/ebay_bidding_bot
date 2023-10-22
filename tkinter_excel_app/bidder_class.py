@@ -26,7 +26,12 @@ class EbayBidding:
         self.driver.get(f"https://www.ebay.co.uk/itm/{self.ebay_item_number}")
         self.driver.implicitly_wait(3)
 
+    def correct_link(self):
+        if self.driver.find_element(By.CLASS_NAME, "ux-call-to-action__text").text == "Buy it now":
+            self.quit()
+
     def bid_end_time_left(self):
+        self.correct_link()
         self.bid_end_time_left = self.driver.find_element(
             By.CLASS_NAME,
             'ux-timer__text')
