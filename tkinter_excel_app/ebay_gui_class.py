@@ -5,14 +5,25 @@ from bidder_class import EbayBidding
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime as dt
 import datetime
+import os
+import sys
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS2
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 class EbayGui():
 
     def __init__(self):
         self.root = tk.Tk()
         self.style = ttk.Style(self.root)
-        self.root.tk.call("source", "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\forest-dark.tcl")
-        # self.root.tk.call("source", "forest-dark.tcl")
+        self.root.tk.call("source", resource_path("forest-dark.tcl"))
         self.style.theme_use("forest-dark")
         self.combo_list = [5, 4, 3, 2, 1]
         self.scheduler = BackgroundScheduler()
@@ -104,7 +115,7 @@ class EbayGui():
         selected = self.treeview.index(self.treeview.selection())
 
         try:
-            path = "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\bid.xlsx"
+            path = resource_path("bid.xlsx")
             workbook = openpyxl.load_workbook(path)
             sheet = workbook.active
             sheet.delete_rows(selected + 2, 1)
@@ -115,7 +126,7 @@ class EbayGui():
         self.schedule_on_start()
     
     def remove_old_bid(self):
-        path = "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\bid.xlsx"
+        path = resource_path("bid.xlsx")
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
         list_values = list(sheet.values)
@@ -128,7 +139,7 @@ class EbayGui():
         self.root.mainloop()
     
     def load_data(self):
-        path = "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\bid.xlsx"
+        path = resource_path("bid.xlsx")
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
 
@@ -176,7 +187,7 @@ class EbayGui():
             self.scheduler.add_job(self.remove_old_bid, "date", run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
 
     def schedule_on_start(self):
-        path = "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\bid.xlsx"
+        path = resource_path("bid.xlsx")
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
         list_values = list(sheet.values)
@@ -194,7 +205,7 @@ class EbayGui():
         bid_end = self.bid_time()
         # Insert row into Excel sheet
 
-        path = "D:\\new_start\\personal_project\\ebay_bidding_bot\\tkinter_excel_app\\bid.xlsx"
+        path = resource_path("bid.xlsx")
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
         row_values = [item, bid_amount, seconds, bid_end]
