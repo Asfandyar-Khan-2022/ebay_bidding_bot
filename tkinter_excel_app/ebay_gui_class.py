@@ -5,25 +5,14 @@ from bidder_class import EbayBidding
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime as dt
 import datetime
-import os
-import sys
 
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS2
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
 
 class EbayGui():
 
     def __init__(self):
         self.root = tk.Tk()
         self.style = ttk.Style(self.root)
-        self.root.tk.call("source", resource_path("forest-dark.tcl"))
+        self.root.tk.call("source", "forest-dark.tcl")
         self.style.theme_use("forest-dark")
         self.combo_list = [5, 4, 3, 2, 1]
         self.scheduler = BackgroundScheduler()
@@ -54,13 +43,67 @@ class EbayGui():
         self.seconds_combobox.current(0)
         self.seconds_combobox.grid(row=2, column=0, padx=5, pady=10, sticky="ew")
     
+    def load_chrome_path(self):
+        path = "chrome_path.xlsx"
+        workbook = openpyxl.load_workbook(path)
+        sheet = workbook.active
+        return list(sheet.values)[1:]
+    
+    def default_or_user_path(self):
+        try:
+            for i in self.load_chrome_path()[1]:
+                if i == None:
+                    return self.load_chrome_path()[0]
+                else:
+                    return self.load_chrome_path()[1]
+        except:
+            return self.load_chrome_path()[0]
+
+    
+    def set_chrome_profile(self):
+        list_values = self.default_or_user_path()
+
+        self.user_profile = ttk.Entry(self.frame)
+        self.user_profile.insert(0, f"{list_values[0]}")
+        self.user_profile.bind("<FocusIn>", lambda e: self.user_profile.delete("0", "end"))
+        self.user_profile.grid(row=1, column=0, columnspan=2, padx=5, pady=10, sticky="ew")
+
+    def set_chrome_user_path(self):
+        list_values = self.default_or_user_path()
+
+        self.user_path = ttk.Entry(self.frame)
+        self.user_path.insert(0, f"{list_values[1]}")
+        self.user_path.bind("<FocusIn>", lambda e: self.user_path.delete("0", "end"))
+        self.user_path.grid(row=2, column=0, columnspan=2, padx=5, pady=10, sticky="ew")
+
+    def set_chrome_exe(self):
+        list_values = self.default_or_user_path()   
+
+        self.set_exe = ttk.Entry(self.frame)
+        self.set_exe.insert(0, f"{list_values[2]}")
+        self.set_exe.bind("<FocusIn>", lambda e: self.set_exe.delete("0", "end"))
+        self.set_exe.grid(row=3, column=0, columnspan=2, padx=5, pady=10, sticky="ew")
+    
+    def save_chrome_path_and_exe(self):
+        path = "chrome_path.xlsx"
+        workbook = openpyxl.load_workbook(path)
+        sheet = workbook.active
+        sheet["A3"] = self.user_profile.get()
+        sheet["B3"] = self.user_path.get()
+        sheet["C3"] = self.set_exe.get()
+        workbook.save(path)
+    
+    def save_path(self):
+        save_path = tk.Button(self.widgets_frame, text="Save chrome path", command=self.save_chrome_path_and_exe)
+        save_path.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
+    
     def submit_bid(self):
         button = ttk.Button(self.widgets_frame, text="Bid", command=self.type_error)
         button.grid(row=4, column=0, padx=5, pady=10, sticky="nsew")
     
     def error_log(self):
         self.errors_frame = ttk.LabelFrame(self.frame, text="Errors Log", width=100, height=100)
-        self.errors_frame.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        self.errors_frame.grid(row=4, column=0, columnspan=2, sticky="nsew")
 
     def error_text(self):
         self.error = tk.Label(self.errors_frame, text="")
@@ -88,7 +131,6 @@ class EbayGui():
         except:
             pass
         
-    
     def bid_history(self):
         self.treeFrame = ttk.Frame(self.frame)
         self.treeFrame.grid(row=0, column=1)
@@ -115,7 +157,7 @@ class EbayGui():
         selected = self.treeview.index(self.treeview.selection())
 
         try:
-            path = resource_path("bid.xlsx")
+            path = "bid.xlsx"
             workbook = openpyxl.load_workbook(path)
             sheet = workbook.active
             sheet.delete_rows(selected + 2, 1)
@@ -126,7 +168,7 @@ class EbayGui():
         self.schedule_on_start()
     
     def remove_old_bid(self):
-        path = resource_path("bid.xlsx")
+        path = "bid.xlsx"
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
         list_values = list(sheet.values)
@@ -139,7 +181,7 @@ class EbayGui():
         self.root.mainloop()
     
     def load_data(self):
-        path = resource_path("bid.xlsx")
+        path = "bid.xlsx"
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
 
@@ -152,11 +194,12 @@ class EbayGui():
 
     def bid_time(self):
         item = self.item_id.get()
+        list_values = self.default_or_user_path()
 
         ebay_bidding = EbayBidding(
-            chrome_user="Default",
-            chrome_user_path="C:\\Users\\a_asf\\AppData\\Local\\Google\\Chrome\\User Data\\",
-            chrome_exe="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+            chrome_user=list_values[0],
+            chrome_user_path=list_values[1],
+            chrome_exe=list_values[2],
             ebay_item_number=f"{item}")
         print("before bid_end")
         bid_end = ebay_bidding.get_minute_delayed_bid_time()
@@ -166,10 +209,12 @@ class EbayGui():
         return bid_end
 
     def bid(self, item, amount, seconds):
+        list_values = self.default_or_user_path()
+
         ebay_bidding = EbayBidding(
-            chrome_user="Default",
-            chrome_user_path="C:\\Users\\a_asf\\AppData\\Local\\Google\\Chrome\\User Data\\",
-            chrome_exe="C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+            chrome_user=list_values[0],
+            chrome_user_path=list_values[1],
+            chrome_exe=list_values[2],
             ebay_item_number=f"{item}")
         
         seconds = int(seconds)
@@ -187,7 +232,7 @@ class EbayGui():
             self.scheduler.add_job(self.remove_old_bid, "date", run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
 
     def schedule_on_start(self):
-        path = resource_path("bid.xlsx")
+        path = "bid.xlsx"
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
         list_values = list(sheet.values)
@@ -205,12 +250,14 @@ class EbayGui():
         bid_end = self.bid_time()
         # Insert row into Excel sheet
 
-        path = resource_path("bid.xlsx")
+        path = "bid.xlsx"
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
         row_values = [item, bid_amount, seconds, bid_end]
         sheet.append(row_values)
         workbook.save(path)
+
+        self.save_chrome_path_and_exe()
 
         # Insert row into treeview
         self.treeview.insert("", tk.END, values=row_values)
@@ -223,10 +270,14 @@ class EbayGui():
         self.id_row()
         self.amount_row()
         self.seconds_row()
+        self.set_chrome_user_path()
+        self.set_chrome_exe()
+        self.set_chrome_profile()
         self.submit_bid()
         self.bid_history()
         self.load_history()
         self.delete_row()
+        self.save_path()
         self.error_log()
         self.error_text()
         self.schedule_on_start()
