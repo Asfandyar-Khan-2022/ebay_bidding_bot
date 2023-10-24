@@ -17,6 +17,10 @@ class EbayGui():
         self.combo_list = [5, 4, 3, 2, 1]
         self.scheduler = BackgroundScheduler()
         self.scheduler.start()
+    
+    def load_path(self, path):
+        workbook = openpyxl.load_workbook(path)
+        return workbook.active
 
     def set_frame(self):
         self.frame = ttk.Frame(self.root)
@@ -44,45 +48,33 @@ class EbayGui():
         self.seconds_combobox.grid(row=2, column=0, padx=5, pady=10, sticky="ew")
     
     def load_chrome_path(self):
-        path = "chrome_path.xlsx"
-        workbook = openpyxl.load_workbook(path)
-        sheet = workbook.active
+        sheet = self.load_path("chrome_path.xlsx")
         return list(sheet.values)[1:]
     
     def default_or_user_path(self):
-        try:
-            for i in self.load_chrome_path()[1]:
-                if i == None:
-                    return self.load_chrome_path()[0]
-                else:
-                    return self.load_chrome_path()[1]
-        except:
+        if None in self.load_chrome_path()[1]:
             return self.load_chrome_path()[0]
+        else:
+            return self.load_chrome_path()[1]
+        
+    def chrome_tkinter_setup(self, list_values, row):
+        setup = ttk.Entry(self.frame)
+        setup.insert(0, f"{list_values}")
+        setup.bind("<FocusIn>", lambda e: setup.delete("0", "end"))
+        setup.grid(row=row, column=0, columnspan=2, padx=5, pady=10, sticky="ew")
+        return setup
 
-    
     def set_chrome_profile(self):
-        list_values = self.default_or_user_path()
-
-        self.user_profile = ttk.Entry(self.frame)
-        self.user_profile.insert(0, f"{list_values[0]}")
-        self.user_profile.bind("<FocusIn>", lambda e: self.user_profile.delete("0", "end"))
-        self.user_profile.grid(row=1, column=0, columnspan=2, padx=5, pady=10, sticky="ew")
+        list_values = self.default_or_user_path()[0]
+        self.user_profile = self.chrome_tkinter_setup(list_values=list_values, row=1)
 
     def set_chrome_user_path(self):
-        list_values = self.default_or_user_path()
-
-        self.user_path = ttk.Entry(self.frame)
-        self.user_path.insert(0, f"{list_values[1]}")
-        self.user_path.bind("<FocusIn>", lambda e: self.user_path.delete("0", "end"))
-        self.user_path.grid(row=2, column=0, columnspan=2, padx=5, pady=10, sticky="ew")
+        list_values = self.default_or_user_path()[1]
+        self.user_path = self.chrome_tkinter_setup(list_values=list_values, row=2)
 
     def set_chrome_exe(self):
-        list_values = self.default_or_user_path()   
-
-        self.set_exe = ttk.Entry(self.frame)
-        self.set_exe.insert(0, f"{list_values[2]}")
-        self.set_exe.bind("<FocusIn>", lambda e: self.set_exe.delete("0", "end"))
-        self.set_exe.grid(row=3, column=0, columnspan=2, padx=5, pady=10, sticky="ew")
+        list_values = self.default_or_user_path()[2]   
+        self.set_exe = self.chrome_tkinter_setup(list_values=list_values, row=3)
     
     def save_chrome_path_and_exe(self):
         path = "chrome_path.xlsx"
@@ -109,19 +101,25 @@ class EbayGui():
         self.error = tk.Label(self.errors_frame, text="")
         self.error.pack(pady=20)
     
-    def type_error(self):
+    def invalid_id_error(self):
         try:
             int(self.item_id.get())
         except:
             self.error.config(text="Please enter a valid item ID. It should look something like this: 101202921365")
+    
+    def invalid_amount_error(self):
         try:
             float(self.amount.get())
         except:
             self.error.config(text="Please enter a valid amount. It should look somethig like this: 10 or 10.5")
+    
+    def invalid_seconds_error(self):
         try:
             int(self.seconds_combobox.get())
         except:
             self.error.config(text="Please enter a valid time. It should look something like this: 3")
+    
+    def insert_valid_row(self):
         try:
             int(self.item_id.get())
             float(self.amount.get())
@@ -130,7 +128,13 @@ class EbayGui():
             self.insert_row()
         except:
             pass
-        
+    
+    def type_error(self):
+        self.invalid_id_error()
+        self.invalid_amount_error()
+        self.invalid_seconds_error()
+        self.insert_valid_row()
+
     def bid_history(self):
         self.treeFrame = ttk.Frame(self.frame)
         self.treeFrame.grid(row=0, column=1)
@@ -181,9 +185,7 @@ class EbayGui():
         self.root.mainloop()
     
     def load_data(self):
-        path = "bid.xlsx"
-        workbook = openpyxl.load_workbook(path)
-        sheet = workbook.active
+        sheet = self.load_path("bid.xlsx")
 
         list_values = list(sheet.values)
         for col_name in list_values[0]:
@@ -201,11 +203,9 @@ class EbayGui():
             chrome_user_path=list_values[1],
             chrome_exe=list_values[2],
             ebay_item_number=f"{item}")
-        print("before bid_end")
         bid_end = ebay_bidding.get_minute_delayed_bid_time()
-        print("before quit")
+        # I might want to change this 
         ebay_bidding.quit()
-        print("before return")
         return bid_end
 
     def bid(self, item, amount, seconds):
@@ -232,9 +232,7 @@ class EbayGui():
             self.scheduler.add_job(self.remove_old_bid, "date", run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
 
     def schedule_on_start(self):
-        path = "bid.xlsx"
-        workbook = openpyxl.load_workbook(path)
-        sheet = workbook.active
+        sheet = self.load_path("bid.xlsx")
         list_values = list(sheet.values)
         self.scheduler.remove_all_jobs()
         
@@ -252,7 +250,7 @@ class EbayGui():
 
         path = "bid.xlsx"
         workbook = openpyxl.load_workbook(path)
-        sheet = workbook.active
+        sheet = self.load_path("bid.xlsx")
         row_values = [item, bid_amount, seconds, bid_end]
         sheet.append(row_values)
         workbook.save(path)
