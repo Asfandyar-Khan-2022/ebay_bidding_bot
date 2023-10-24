@@ -1,3 +1,7 @@
+"""
+Ebay bidding bot GUI integrated with bidding 
+"""
+
 import tkinter as tk
 from tkinter import ttk
 import openpyxl
@@ -5,7 +9,6 @@ from bidder_class import EbayBidding
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime as dt
 import datetime
-
 
 class EbayGui():
 
@@ -86,7 +89,11 @@ class EbayGui():
         workbook.save(path)
     
     def save_path(self):
-        save_path = tk.Button(self.widgets_frame, text="Save chrome path", command=self.save_chrome_path_and_exe)
+        save_path = tk.Button(
+            self.widgets_frame,
+            text="Save chrome path", 
+            command=self.save_chrome_path_and_exe)
+        
         save_path.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
     
     def submit_bid(self):
@@ -143,7 +150,12 @@ class EbayGui():
 
     def load_history(self):
         cols = ("Item ID", "Amount £", "Seconds", "Bid end")
-        self.treeview = ttk.Treeview(self.treeFrame, show="headings", yscrollcommand=self.treeScroll.set, columns=cols, height=13)
+        self.treeview = ttk.Treeview(
+            self.treeFrame, show="headings", 
+            yscrollcommand=self.treeScroll.set, 
+            columns=cols, 
+            height=13)
+        
         self.treeview.column("Item ID", width=100)
         self.treeview.column("Amount £", width=50)
         self.treeview.column("Seconds", width=100, anchor="center")
@@ -153,7 +165,10 @@ class EbayGui():
         self.load_data()
 
     def delete_row(self):
-        delete_button = tk.Button(self.widgets_frame, text="Delete row", command=lambda:self.delete())
+        delete_button = tk.Button(self.widgets_frame, 
+                                  text="Delete row", 
+                                  command=lambda:self.delete())
+        
         delete_button.grid(row=5, column=0, padx=5, pady=10, sticky="nsew")
 
     def delete(self):
@@ -229,7 +244,9 @@ class EbayGui():
             ebay_bidding.quit()
         else:
             self.scheduler.add_job(ebay_bidding.confirm_bid, "date", run_date=seconds_before_bid)
-            self.scheduler.add_job(self.remove_old_bid, "date", run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
+            self.scheduler.add_job(
+                self.remove_old_bid, "date", 
+                run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
 
     def schedule_on_start(self):
         sheet = self.load_path("bid.xlsx")
@@ -237,7 +254,13 @@ class EbayGui():
         self.scheduler.remove_all_jobs()
         
         for item in list_values[1:]:
-            self.scheduler.add_job(self.bid, "date", run_date=item[-1], args=[item[0], item[1], item[2]])
+            self.scheduler.add_job(
+                self.bid, "date", 
+                run_date=item[-1], 
+                args=[item[0], 
+                item[1], 
+                item[2]])
+            
         if len(list_values[1:]) > 0:
             self.scheduler.print_jobs()
 
