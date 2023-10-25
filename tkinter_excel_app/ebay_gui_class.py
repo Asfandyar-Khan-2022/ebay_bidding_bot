@@ -1,6 +1,4 @@
-"""
-Ebay bidding bot GUI integrated with bidding 
-"""
+"""Ebay bidding bot GUI integrated with bidding."""
 
 import tkinter as tk
 from tkinter import ttk
@@ -11,6 +9,7 @@ from datetime import datetime as dt
 import datetime
 
 class EbayGui():
+    """GUI integrated with bidder to bid on items."""
 
     def __init__(self):
         self.root = tk.Tk()
@@ -22,45 +21,81 @@ class EbayGui():
         self.scheduler.start()
     
     def load_path(self, path):
+        """Loads the excel file.
+
+        Args:
+            path: path to the name of excel to open
+        
+        Returns:
+            The contents of the excel
+        
+        """
         workbook = openpyxl.load_workbook(path)
         return workbook.active
 
     def set_frame(self):
+        """Creates the GUI window"""
         self.frame = ttk.Frame(self.root)
         self.frame.pack()
     
     def bid_border(self):
+        """Create bidding bot section within GUI"""
         self.widgets_frame = ttk.LabelFrame(self.frame, text="Insert Bid")
         self.widgets_frame.grid(row=0, column=0, sticky="nsew")
 
     def id_row(self):
+        """GUI box to add item ID"""
         self.item_id = ttk.Entry(self.widgets_frame)
         self.item_id.insert(0, "Item ID")
         self.item_id.bind("<FocusIn>", lambda e: self.item_id.delete("0", "end"))
         self.item_id.grid(row=0, column=0, padx=5, pady=10, sticky="ew")
 
     def amount_row(self):
+        """GUI box to add item amount"""
         self.amount = ttk.Entry(self.widgets_frame)
         self.amount.insert(0, "£")
         self.amount.bind("<FocusIn>", lambda e: self.amount.delete("0", "end"))
         self.amount.grid(row=1, column=0, padx=5, pady=10, sticky="ew") 
     
     def seconds_row(self):
+        """GUI dropdown to add item ID"""
         self.seconds_combobox = ttk.Combobox(self.widgets_frame, values=self.combo_list)
         self.seconds_combobox.current(0)
         self.seconds_combobox.grid(row=2, column=0, padx=5, pady=10, sticky="ew")
     
     def load_chrome_path(self):
+        """Get excel data.
+
+        Returns:
+            List of chrome paths
+        
+        """
         sheet = self.load_path("chrome_path.xlsx")
         return list(sheet.values)[1:]
     
     def default_or_user_path(self):
+        """Set user inserted path or default values.
+
+        Returns:
+            User path if possible, default otherwise.
+
+        """
         if None in self.load_chrome_path()[1]:
             return self.load_chrome_path()[0]
         else:
             return self.load_chrome_path()[1]
         
     def chrome_tkinter_setup(self, list_values, row):
+        """Setup row to insert chrome path data.
+
+        Args:
+            list_values: Chrome path.
+            row: Row to place the value into.
+
+        Returns:
+            Row setup settings      
+        
+        """
         setup = ttk.Entry(self.frame)
         setup.insert(0, f"{list_values}")
         setup.bind("<FocusIn>", lambda e: setup.delete("0", "end"))
@@ -68,18 +103,22 @@ class EbayGui():
         return setup
 
     def set_chrome_profile(self):
+        """Create row to insert chrome profile."""
         list_values = self.default_or_user_path()[0]
         self.user_profile = self.chrome_tkinter_setup(list_values=list_values, row=1)
 
     def set_chrome_user_path(self):
+        """Create row to insert chrome user path."""
         list_values = self.default_or_user_path()[1]
         self.user_path = self.chrome_tkinter_setup(list_values=list_values, row=2)
 
     def set_chrome_exe(self):
+        """Create row to insert chrome executable."""
         list_values = self.default_or_user_path()[2]   
         self.set_exe = self.chrome_tkinter_setup(list_values=list_values, row=3)
     
     def save_chrome_path_and_exe(self):
+        """Save the inserted chrome path, exe and profile to excel."""
         path = "chrome_path.xlsx"
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
@@ -89,6 +128,7 @@ class EbayGui():
         workbook.save(path)
     
     def save_path(self):
+        """Submit button to save chrome path, exe and profile."""
         save_path = tk.Button(
             self.widgets_frame,
             text="Save chrome path", 
@@ -97,36 +137,43 @@ class EbayGui():
         save_path.grid(row=6, column=0, padx=5, pady=10, sticky="nsew")
     
     def submit_bid(self):
+        """Submit button to place bid."""
         button = ttk.Button(self.widgets_frame, text="Bid", command=self.type_error)
         button.grid(row=4, column=0, padx=5, pady=10, sticky="nsew")
     
     def error_log(self):
+        """Shows any errors made in block."""
         self.errors_frame = ttk.LabelFrame(self.frame, text="Errors Log", width=100, height=100)
         self.errors_frame.grid(row=4, column=0, columnspan=2, sticky="nsew")
 
     def error_text(self):
+        """Label error log block."""
         self.error = tk.Label(self.errors_frame, text="")
         self.error.pack(pady=20)
     
     def invalid_id_error(self):
+        """Attempts to get valid item ID."""
         try:
             int(self.item_id.get())
         except:
             self.error.config(text="Please enter a valid item ID. It should look something like this: 101202921365")
     
     def invalid_amount_error(self):
+        """Attempts to get valid item ID."""
         try:
             float(self.amount.get())
         except:
             self.error.config(text="Please enter a valid amount. It should look somethig like this: 10 or 10.5")
     
     def invalid_seconds_error(self):
+        """Attempts to get valid time in seconds."""
         try:
             int(self.seconds_combobox.get())
         except:
             self.error.config(text="Please enter a valid time. It should look something like this: 3")
     
     def insert_valid_row(self):
+        """Attempts to get item ID, amount and seconds."""
         try:
             int(self.item_id.get())
             float(self.amount.get())
@@ -137,18 +184,21 @@ class EbayGui():
             pass
     
     def type_error(self):
+        """Ordered method call."""
         self.invalid_id_error()
         self.invalid_amount_error()
         self.invalid_seconds_error()
         self.insert_valid_row()
 
     def bid_history(self):
+        """Create column to add bid queued items."""
         self.treeFrame = ttk.Frame(self.frame)
         self.treeFrame.grid(row=0, column=1)
         self.treeScroll = ttk.Scrollbar(self.treeFrame)
         self.treeScroll.pack(side="right", fill="y")
 
     def load_history(self):
+        """Add item rows to bid history column."""
         cols = ("Item ID", "Amount £", "Seconds", "Bid end")
         self.treeview = ttk.Treeview(
             self.treeFrame, show="headings", 
@@ -165,6 +215,7 @@ class EbayGui():
         self.load_data()
 
     def delete_row(self):
+        """Delete item row from bid queue."""
         delete_button = tk.Button(self.widgets_frame, 
                                   text="Delete row", 
                                   command=lambda:self.delete())
@@ -172,6 +223,10 @@ class EbayGui():
         delete_button.grid(row=5, column=0, padx=5, pady=10, sticky="nsew")
 
     def delete(self):
+        """Attempt to delete selected item and save back to excel. 
+        Also reschedule the bids.
+
+        """
         selected_item=self.treeview.selection()[0]
         selected = self.treeview.index(self.treeview.selection())
 
@@ -187,6 +242,7 @@ class EbayGui():
         self.schedule_on_start()
     
     def remove_old_bid(self):
+        """Remove expired bids."""
         path = "bid.xlsx"
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
@@ -197,9 +253,11 @@ class EbayGui():
                 workbook.save(path)
 
     def start_gui(self):
+        """Start GUI"""
         self.root.mainloop()
     
     def load_data(self):
+        """Load valumes into the bid history column."""
         sheet = self.load_path("bid.xlsx")
 
         list_values = list(sheet.values)
@@ -210,6 +268,7 @@ class EbayGui():
             self.treeview.insert("", tk.END, values=value_tuple)
 
     def bid_time(self):
+        """Get the time before the bid is due to end."""
         item = self.item_id.get()
         list_values = self.default_or_user_path()
 
@@ -224,6 +283,10 @@ class EbayGui():
         return bid_end
 
     def bid(self, item, amount, seconds):
+        """Place a bid on the item. Throwing an error 
+        to the error log if item has been outbid.
+
+        """
         list_values = self.default_or_user_path()
 
         ebay_bidding = EbayBidding(
@@ -249,6 +312,10 @@ class EbayGui():
                 run_date=(seconds_before_bid + datetime.timedelta(seconds=seconds)))
 
     def schedule_on_start(self):
+        """Goes through all saved bids and adds 
+        them back to the scheduled bid time.
+        
+        """
         sheet = self.load_path("bid.xlsx")
         list_values = list(sheet.values)
         self.scheduler.remove_all_jobs()
@@ -265,6 +332,10 @@ class EbayGui():
             self.scheduler.print_jobs()
 
     def insert_row(self):
+        """Save the inserted item row and 
+        insert it into the bid history column
+        
+        """
         item = self.item_id.get()
         bid_amount = self.amount.get()
         seconds = self.seconds_combobox.get()
